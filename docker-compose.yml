@@ -1,0 +1,82 @@
+# IAM Attack & Defense Lab - Keycloak + PostgreSQL + demo relying-party app.
+#
+# LAB ONLY: dev-mode Keycloak, plain HTTP, weak default secrets, strict hostname
+# disabled. Not production-safe; do not reuse these settings.
+#
+#   docker compose up --build -d
+#   Admin UI:  http://localhost:8080   (admin / see .env)
+#   Demo app:  http://localhost:8000
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: iam-lab-postgres
+    environment:
+      POSTGRES_DB: ${KC_DB_NAME:-keycloak}
+      POSTGRES_USER: ${KC_DB_USER:-keycloak}
+      POSTGRES_PASSWORD: ${KC_DB_PASSWORD:-keycloak}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${KC_DB_USER:-keycloak} -d ${KC_DB_NAME:-keycloak}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - iam-lab
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    container_name: iam-lab-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KC_DB_NAME:-keycloak}
+      KC_DB_USERNAME: ${KC_DB_USER:-keycloak}
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD:-keycloak}
+      # Full URL is required when backchannel-dynamic is enabled.
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_STRICT: "false"
+      # Keep issuer and the login page on localhost while back-channel endpoints
+      # (token, certs) resolve to the caller's host, so the app can reach them at
+      # keycloak:8080 without breaking token iss validation. See docs/defense.md.
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8080:8080"
+      - "9000:9000"
+    volumes:
+      # Realm JSONs here are imported on startup.
+      - ./realms:/opt/keycloak/data/import:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - iam-lab
+
+  app:
+    build: ./app
+    container_name: iam-lab-app
+    environment:
+      OIDC_ISSUER_PUBLIC: http://localhost:8080/realms/secure-lab
+      OIDC_ISSUER_INTERNAL: http://keycloak:8080/realms/secure-lab
+      APP_BASE_URL: http://localhost:8000
+      OIDC_CLIENT_ID: demo-rp
+      OIDC_CLIENT_SECRET: demo-rp-secret-CHANGE-ME
+      APP_SECRET: lab-session-secret-change-me
+    ports:
+      - "8000:8000"
+    depends_on:
+      - keycloak
+    networks:
+      - iam-lab
+
+volumes:
+  pg_data:
+
+networks:
+  iam-lab:
+    driver: bridge

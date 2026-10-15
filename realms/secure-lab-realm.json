@@ -1,0 +1,73 @@
+{
+  "realm": "secure-lab",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+
+  "roles": {
+    "realm": [
+      { "name": "lab-user",  "description": "Standard authenticated lab user." },
+      { "name": "lab-admin", "description": "Elevated role for role-gated routes and privilege demos." }
+    ]
+  },
+
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "alice@lab.local",
+      "firstName": "Alice",
+      "lastName": "Analyst",
+      "credentials": [
+        { "type": "password", "value": "alice-password", "temporary": false }
+      ],
+      "realmRoles": [ "lab-user" ]
+    },
+    {
+      "username": "admin-amy",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "amy@lab.local",
+      "firstName": "Amy",
+      "lastName": "Admin",
+      "credentials": [
+        { "type": "password", "value": "amy-password", "temporary": false }
+      ],
+      "realmRoles": [ "lab-user", "lab-admin" ]
+    }
+  ],
+
+  "clients": [
+    {
+      "clientId": "demo-rp",
+      "name": "Demo Relying Party (secure)",
+      "description": "The FastAPI app. Confidential client, Authorization Code + PKCE only.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "demo-rp-secret-CHANGE-ME",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [ "http://localhost:8000/auth/callback" ],
+      "webOrigins": [ "http://localhost:8000" ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:8000/*"
+      }
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+{
+  "realm": "vuln-lab",
+  "enabled": true,
+  "sslRequired": "none",
+
+  "registrationAllowed": true,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 36000,
+  "ssoSessionMaxLifespan": 360000,
+
+  "bruteForceProtected": false,
+
+  "roles": {
+    "realm": [
+      { "name": "lab-user",  "description": "Standard authenticated lab user." },
+      { "name": "lab-admin", "description": "Elevated role (privilege-escalation target)." }
+    ]
+  },
+
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "alice@lab.local",
+      "firstName": "Alice",
+      "lastName": "Analyst",
+      "credentials": [
+        { "type": "password", "value": "alice-password", "temporary": false }
+      ],
+      "realmRoles": [ "lab-user" ]
+    },
+    {
+      "username": "admin-amy",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "amy@lab.local",
+      "firstName": "Amy",
+      "lastName": "Admin",
+      "credentials": [
+        { "type": "password", "value": "amy-password", "temporary": false }
+      ],
+      "realmRoles": [ "lab-user", "lab-admin" ]
+    },
+    {
+      "username": "victim",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "victim@lab.local",
+      "firstName": "Val",
+      "lastName": "Victim",
+      "credentials": [
+        { "type": "password", "value": "Password1", "temporary": false }
+      ],
+      "realmRoles": [ "lab-user" ]
+    }
+  ],
+
+  "clients": [
+    {
+      "clientId": "vuln-rp",
+      "name": "Demo Relying Party (VULNERABLE)",
+      "description": "Deliberately insecure client: public, wildcard redirect, no PKCE, implicit + password grants on.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [ "*" ],
+      "webOrigins": [ "*" ],
+      "attributes": {
+        "post.logout.redirect.uris": "+"
+      }
+    }
+  ]
+}

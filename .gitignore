@@ -1,0 +1,30 @@
+# Secrets / local env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Evidence captures that may contain live tokens - keep these OUT of git.
+# Commit only redacted screenshots/logs under attacks/ that you have scrubbed.
+pocs/out/
+*.token
+*.jwt
+scratch/
+
+# Local working log - not published
+PROGRESS.md
+
+# Extra safety: real secrets, keys, logs, OS/IDE cruft (never publish)
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+*.log
+.DS_Store
+.idea/
+.vscode/
